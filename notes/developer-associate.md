@@ -270,3 +270,206 @@ Two open-source caching engines
 When to use
 - Elasticache: load is read heavy, data not prone to frequent changing
 - Redshift: OLAP transactions are constantly ran by management
+
+## S3
+
+*Simple Storage Service*
+
+Object-based storage, not block storage
+- spread across multiple devices and facilities
+- high availability and disaster recovery
+
+Files
+- 0 bytes to 5 TB
+- unlimited storage
+- stored in Buckets (similar to folders)
+- universal namespace, names must be unique globally
+- e.g. https://s3-eu-west-1.amazonaws.com/UNIQUENAME
+- HTTP 200 when upload successful from CLI or API
+
+Data consistency
+- Read after Write: file is available to read immediately after PUT
+- Eventual Consistency: overwrite PUTs and DELETEs can take some time
+
+Object-based, key-value store
+- objects consist of
+  - key: name of object
+  - value: the data, sequence of bytes
+  - version ID: important for versioning
+  - metadata
+  - subresources: bucket-specific configuratuon
+    - bucket policies, access controls lists
+    - cross origin resource sharing (CORS)
+    - transfer acceleration
+
+Availability
+- designed for 99.99 availability for S3 platform
+- Amazon guarantees 99.9% availability
+- Amazon guarantees 99.999999999 durability for S3 information (11 x 9's)
+  - how much data expected to keep within a year
+  - stored redundantly across multiple devices
+  - designed to sustain a loss of 2 facilities concurrently
+- always have backup of data
+- tiered storage available
+- lifecycle management
+- versioning
+- encryption
+
+Storage Tiers/Classes
+- S3
+- S3 - IA (Infrequently Accessed)
+  - 99.9% availability
+  - requires rapid access when needed
+  - lower fee, but charged retrieval fee
+- S3 - One Zone IA
+  - stored in a single AZ only
+  - only 99.5% availability
+  - cost is 20% less than regular S3 IA
+- Glacier
+  - 99.99% availability after you restore objects
+  - for archival only
+  - very cheap
+  - for infrequently accessed data
+  - can take 3-5 hours to retrieve
+- Reduced Redundancy Storage
+  - 99.99% durability
+  - 99.99% availability
+  - used for data that can be recreated if lost, e.g. thumbnails
+  - phasing out? starting to not be available in some regions, and more expensive than S3
+
+Intelligent Tiering
+- unknown or unpredictable access patterns
+- 2 tiers
+  - frequent access
+  - infrequent access
+- automatically moves fate to more cost-effective tier-based on how frequently objects are accessed
+- 99.999999999% durability
+- 99.9% availability
+- optimizes costs
+- no fees for accessing data
+- small monthly fee for monitoring/automation $0.0025 per 1,000 objects
+
+Charges
+- charged for storage per GB, requests (get, put, copy, etc.), storage management pricing (inventory, analytics, and object tags)
+- data management pricing
+  - data transferred out of S3
+- transfer acceleration
+  - use of CloudFront to optimize transfers
+
+Security
+- all newly created buckets are private
+- can be configured to create access logs, which can be written to another bucket
+
+S3 Website Hosting
+- always use website URL (https://BUCKETNAME.s3-website-REGION.amazonaws.com) instead of S3 URL (https://s3-REGION-.amazonaws.com/BUCKETNAME)
+
+ACL
+- access control list
+- per object basis
+
+Properties
+- Versioning
+  - if object is deleted, can be restored to a previous version
+- Server access logging
+  - for auditing
+- Tags
+  - to track project costs
+- Object-level logging
+  - uses CloudTrail for an additional cost
+- encryption
+  - AES-256 - default Amazon S3 encryption
+  - KMS
+- Cloudwatch metric logging
+
+Metadata
+- not modifiable after object is created
+
+Policies
+- can be written with JSON or by the Policy Generator
+
+In Transit
+- SSL/TLS, using HTTPS to upload
+
+At Rest
+- Server Side Encryption (SSE)
+  - S3 Managed Keys - SSE-S3
+  - AWS KMS Managed Keys - SSE-KMS
+    - includes audit trail
+    - can use default key unique to you or create a custom one
+  - Server Side Encryption with Customer Provided Keys - SSE-C 
+    - key rotation
+- Client Side Encryption
+  - encrypt files with client before upload
+
+Enforcing encryption
+- upload is a PUT request
+- host
+- date/timestamp of upload
+- authorization string
+- content-type
+- content-length
+- user-defined metadata
+- expect
+  - AWS can reject upload based on header
+
+Encryption header
+- `x-amz-server-side-encryption: AES256 | ams:kms`
+- encrypt at time of upload
+- can deny all PUT requests that don't include this parameter in headers from bucket policy
+  - condition: `"StringNotEquals"`
+  - returns 403 forbidden
+
+CORS Configuration
+- Static website hosting
+  - bucket can be used to host website
+  - grant public access
+- for CORS, files across multiple buckets
+
+Performance optimization
+- if receiving >100 PUT/LIST/DELETE requests or >300 GET requests
+- GET-intensive workloads
+  - use Cloudfront CDN
+- Mixed request type workloads (GET, PUT, DELETE)
+  - key names can impact
+  - sequential key prefixes increase likelihood to be on same partition
+  - to optimize, introduce randomness into prefix of key name
+
+## Cloudfront
+
+CDN
+- content delivery network
+- system of distributed servers (network) delivers content based on geographical location
+
+Edge Location
+- where content is cached and can be written
+- separate to a region/AZ
+- cached for life of (Time to Live) TTL in seconds
+- can clear caches manually, but will be charged
+
+Origin
+- where all files that the CDN will distribute
+- can be S3 bucket, EC2, ELB, Route53
+
+Distribution
+- name which consistes of collection of Edge Locations
+- two types:
+  - web distribution
+    - websites over HTTP/HTTPS
+  - RTMP distribution
+    - Adobe Real Time Messaging Protocol, for media streaming, Flash media content
+- optimized to work with AWS servers as well as non-AWS servers
+
+Transfer Acceleration
+- takes advantages of Cloudfront's edge locations
+
+Restrict Viewer Access
+- can restrict to users who use signed URLs or signed cookies
+
+Web Application Firewall (WAF)
+- at application layer
+
+Alternate Domain Names
+- can add
+
+Geo-Restrictions
+- whitelist/blacklist certain countries
