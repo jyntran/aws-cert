@@ -473,3 +473,96 @@ Alternate Domain Names
 
 Geo-Restrictions
 - whitelist/blacklist certain countries
+
+## Serverless
+
+No worrying about servers, database administration
+
+Independent, 1 event = function
+
+Can trigger other functions, 1 event can = x functions
+
+Continuous scaling
+- scales out (not up) automatically
+
+Lambda
+- is serverless
+- takes care of provisioning and managing services to run code
+- can run code in response to events
+- as computer service in response to HTTP requests using API calls using SDKs
+
+Languages
+- NodeJS
+- Python
+- Java
+- C#
+- Go
+
+Number of requests
+- first 1 million requests are free. $0.20 per 1 million requests thereafter
+
+Duration
+- calculated from the time code begins executing until it returns or terminates
+
+Echo and Alexa
+- voice to text to Lambda
+
+Serverless
+- services?
+
+Architectures can get complicated, AWS X-ray can debug Lambda
+
+Can be global, can back up S3 buckets to other S3 buckets
+
+## API Gateway
+
+API
+- waiter in restaurant analogy
+
+Types of APIs
+- REST (Representational State Transfer)
+  - JSON
+- SOAP (Simple Object Access Protocol)
+  - XML
+
+Amazon API Gateway
+- full managed service make it easy for developers to manage APIs
+- exposes HTTPS endpoints to define a RESTful API
+- serverless-ly connect to services like Lambda and DynamoDB
+- send each API endpoint to a different target
+- scales effortlessly
+- track and control usage by API key
+- can throttle requests to prevent attacks (e.g. DDoS)
+- connect to CloudWatch to log results
+- maintain multiple versions of API
+
+Configure
+- define API (container)
+- define resources and nested resources (URL paths)
+- for each resource
+  - select supported HTTP v=methods (verbs)
+  - set security
+  - choose target (service)
+  - set request and response transformations
+- deploy API to a Stage
+  - use API gateway domain by default
+  - can use custom domain
+  - supports AWS Certificate Manager (free SSL/TLS certs)
+
+API caching
+- cache endpoint response with TTL
+
+Same Origin Policy
+- web browser permits scripts only if both web pages have the same origin
+- to prevent Cross Site Scripting (XSS)
+
+Cross-Origin Resource Sharing (CORS)
+- a more relaxed policy
+- restricted resources from another domain
+- enforced by the client
+
+HTTP Options call
+- server returns response: These other domains are approved to GET this URL
+
+Error
+- need to enable CORS on API Gateway
