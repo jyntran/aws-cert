@@ -507,8 +507,10 @@ Duration
 Echo and Alexa
 - voice to text to Lambda
 
-Serverless
-- services?
+Serverless services
+- DynamoDB
+- S3
+- Lambda
 
 Architectures can get complicated, AWS X-ray can debug Lambda
 
@@ -566,3 +568,71 @@ HTTP Options call
 
 Error
 - need to enable CORS on API Gateway
+
+## Lambda
+
+Versioning
+- each has a unique ARN
+- immutable
+- only $LATEST can be updated
+
+Qualified/Unqualified ARNs
+- qualified: `helloworld:$LATEST` or `helloworld:ALIAS`
+- unqualified: `helloworld` (no version)
+
+Alias
+- can create a PROD alias, point to version 1, then change to version 2 when ready
+
+Shift traffic
+- based on weights (%)
+- cannot be done on $LATEST version, instead create an alias to $LATEST
+
+## Alexa
+
+Echo (hardware) and Alexa (software)
+
+Amazon Polly
+- text-to-speech service
+- can synthesize text to an .mp3 in S3
+
+SSML (synthesis speech markup language)
+- `<speak>`
+- `<audio src="s3_sound.mp3">`
+
+## Step Functions
+
+- allow to visualize and test serverless applications
+- automatically triggers and tracks each step
+- retries when there are errors
+- logs state of each step
+- ensures application runs in order
+- under Application Integration
+- uses JSON-based Amazon States Language (ASL)
+
+## X-Ray
+
+- collects data about requests
+- traces requests; view, filter, and gain insights into that data
+- X-Ray SDK -> X-Ray daemon -> X-Ray API -> X-Ray Console
+- integrates with
+  - ELB
+  - Lambda
+  - API Gateway
+  - EC2
+  - Elastic Beanstalk
+- languages, same list as supported by Lambda
+- interceptors to add to code to trace incoming HTTP requests
+- client handlers to instrument AWS SDK clients to call other services
+
+## Advanced API Gateway
+
+Import APIs
+- Supports Swagger 2.0 API definition files
+
+API Throttling
+- by default, limits steady-rate request rate to 10,000 requests per second (rps) or 5,000 concurrent requests
+- if over, receive a 429 Too Many Request error
+
+SOAP Configuration
+- as a SOAP web service passthrough
+
