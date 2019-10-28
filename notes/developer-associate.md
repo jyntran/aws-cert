@@ -251,6 +251,7 @@ Read Replicas
 Easily deploy, operate, and scale in-memory cache in the cloud for low latency access
 - result of I/O-intensive database queries or computationally-intensive calculations
 - e.g. cache top ten most sold items
+- sits between application and database
 
 Two open-source caching engines
 - Memcached
@@ -270,6 +271,22 @@ Two open-source caching engines
 When to use
 - Elasticache: load is read heavy, data not prone to frequent changing
 - Redshift: OLAP transactions are constantly ran by management
+
+Lazy Loading
+- loads from cache
+- only requested data is cached, and avoids filling cache with useless data
+- node failures are not fatal
+- if cache miss, query to database, and write to cache
+- stale data can remain in cache
+  - can set TTL to avoid this
+
+Write-through
+- data in the cache are never stake
+- user are generally more tolerant of additional latency when updating data than when retrieving it
+- write penalty, every write involves writing to cache and to DB
+- if node fails, data is missing until added or updated in the database
+  - can be mitigated by implementing both LL and WT
+- wasted resources if most of the data is never read
 
 ## S3
 
@@ -636,3 +653,135 @@ API Throttling
 SOAP Configuration
 - as a SOAP web service passthrough
 
+## DynamoDB
+- low latency NoSQL database service
+- consists of tables, items. attributes
+- serverless
+- stored on SSD storage
+- spread across 3 geographically distinct data centres
+- supports document and key-value data models
+- documents can be written in JSON, HTML, or XML
+
+Consistency Models
+- eventual consistent reads (default)
+  - consistency is reached within a second
+- strongly consistent reads
+  - any writes are reflected in the next read
+  - returns a result that reflects all responses
+
+Primary Keys
+- Partition Key - unique attribute (e.g. user ID)
+  - value is input to an internal hash function which determines the partition or physical location of on which the data is stored
+- Composite Key (Partition Key + Sort Key)
+  - 2 items may have the same Partition Key, but must have a unique Sort Key
+
+Access Control
+- IAM Users
+- Roles for temporary access keys, e.g. for EC2 instances to have access to DynamoDB
+- Condition to restrict access, e.g. where Partition Key matches their User ID (`dynamodb:LeadingKeys`)
+
+Indexes
+- speeds up queries on specific data columns
+- Local Secondary Index
+  - only created on table creation
+  - cannot be added, removed, modified later
+  - same Partition Key as original table, but different Sort Key
+  - e.g. Partition Key: User ID, Sort Key: account creation date
+- Global Secondary Index
+  - can be created or added later
+  - different Partition Key and Sort Key
+  - e.g. Partition Key: email address, Sort Key: last login date
+
+Query
+- operation that finds items based on Primary Key attribute and a distinct value to search for
+- optional, use a Sort Key to refine
+- can use `ProjectionExpression` parameter
+  - e.g. if you only want to see the email address rather than all attributes
+- results. always sorted by Sort Key in ascending order/ASCII character code values
+- reverse by setting `ScanIndexForward` parameter to `false` (queries only)
+- by default, all queries are eventual consistent
+
+Scan
+- operation examines every item in table
+- by default returns all data attributes
+
+Differences
+- queries are more efficient than scans
+- scan dumps all results then filters
+- scan takes longer, can use up provisioned throughput in a single operation
+- can set page size to return less which uses fewer read operations
+- isolate scan operations to specific tables
+- by default, scan returns 1MB increments, scans one partition at a time
+- can configure to use parallel scans, best to avoid if table or index is already under heavy use
+- if possible, design tables in a way that you can use Query, Get, or BatchGetItem APIs
+
+Provisioned Throughput
+- measured in Capacity Units (CU)
+- 1 Write CU = 1KB Write per second
+- e.g. 600 items per minute, each item consists of 5KB
+  - 1 WCU = 1KB of data. 600 /60 = 10 writes per second x 5KB = 50KB written per second, therefore 50 WCU
+- 1 Read CU = 1 x 4KB SCR per second OR 2 x 4KB ECR per second (default)
+  - i.e. ECR is double the throughput of SCR
+- e.g. read 25 items of 13KB per second, eventually consistent
+  - each read CU represents 1 x 4KB SCR. 13KB/4KB = 3.25, rounded up is 4, multiply by 25 = 100 SCR/2 50 ECR
+- if app reads or writes larger items, will consume more CU and will cost more
+
+On-Demand Capacity
+- charges apply for: reading, writing, and storing data
+- don't need to specify read/write capacity requirements
+- instantly scales, great for unpredictable workloads
+- pay for only what you use (pay per request)
+
+DynamoDB Accelerator (DAX)
+- fully-managed, clustered in-memory cache
+- up to 10x read performance improvement
+- ideal for read-heavy and bursty workloads
+  - e.g. auction, gaming, retail sites during Black Friday
+- write-through caching service
+  - allows to point DynamoDB API calls at the DAX cluster (query DAX before DynamoDB)
+- if cache miss, DAX performs Eventually Consistent GetItem operation against DynamoDB
+- may be able to reduce provisioned capacity, save money
+- not suitable for
+  - Strongly Consistent read-heavy apps
+  - apps not needing low latency
+  - write-intensive apps
+
+Transactions
+- ACID (Atomic, Consistent, Isolated, Durable)
+- read or write multiple items across multiple tables as an all or nothing operation
+- check for pre-requisite condition before writing
+- good for mission-critical situations, e.g. financial transactions
+
+TTL
+- defines expiration time for data
+- automatically marked for deletion and removed when current time is greater than TTL
+- great for removing
+  - session data
+  - event logs
+  - temporary data
+- expressed as epoch timestamp
+- expiration set for 2 hours after the session began
+- can filter out expired items from queries and scans
+
+Streams
+- time-ordered sequence of item level modifications (insert, update, delete)
+- logs are encrypted at rest and stored for 24 hours until deleted
+- accessed using dedicated endpoint
+- by default Primary Key is recorded, minimum amount
+- Before and After images can be captured
+- applications can take actions based on contents
+- can be an event source for Lambda, is polled
+
+Provisioned Throughput Exceeded Exception
+- `ProvisionedThroughputExceededException`
+  - request rate is too high for read/write capacity provisioned on table
+- SDK automatically retries until successful
+- if not using SDK
+  - reduce request frequency
+  - use Exponential Backoff
+
+Exponential Backoff
+- progressively longer waits between consecutive retries to improve flow control
+  - e.g. 50ms, 100ms, 200ms, ...
+- if after 1 minute still doesn't work, request size may be exceeding the throughput for read/write capacity
+- featured in many SDKs of services, e.g. S3 buckets, CloudFormation, SES, etc.
