@@ -836,7 +836,7 @@ Deletion
 - default retention period is 4 days
 - messages can be retrieved programmatically using SQS API
 - queue acts as a buffer between producer and consumer
-- pull-based, not push-based
+- pull-based (poll), not push-based
 
 Queue Types
 - Standard Queues (default)
@@ -860,3 +860,56 @@ Short Polling
 
 Long Polling
 - polls the queue periodically and only returns a response when a message is in the queue or timeout is reached
+
+## SNS
+
+*Simple Notification Service*
+
+- notification management to different subscribers
+- push notifications to Apple, Google, Fire OS, Windows devices, Android in China with Baidu Cloud Push
+- deliver by SMS or email to SQS or HTTP endpoint
+- can also trigger Lambda functions
+- can group multiple recipients using topics, an access point for identical copies of the same notification
+- messages are stored redundantly across AZs
+- instantaneous, push-based delivery (no polling)
+- simple APIs and easy integration with applications
+- flexible delivery over multiple transport protocols
+- pay-as-you-go-model no up-front cost
+- follows publish-subscribe (pub-sub) paradigm
+
+## SES
+
+*Simple Email Service*
+
+- uses
+  - marketing emails, newsletters, advertisements
+  - purchase confirmations, shipping notifications, order status updates
+- pay-as-you-go-model
+- can be delivered automatically to an S3 bucket
+- can trigger Lambda functions and SNS notifications
+- only need to know email address
+
+## Kinesis
+
+- platform to send streaming data
+- load and analyze data
+
+Kinesis Streams
+- shards
+  - multiple shards in stream
+- streaming data from producers
+- stored for 24 hours, can be configured to be 7 days in shards
+- sent to consumers
+  - other AWS services
+
+Kinesis Firehose
+- producers
+- data analysis in Lambda is optional
+- sent to consumers
+  - S3 then copied to Redshift
+  - or to Elasticsearch cluster
+
+Kinesis Analytics
+- analysis of shards or Firehose
+- uses SQL type of query languages
+- no worry about consumers
