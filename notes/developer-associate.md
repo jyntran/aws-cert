@@ -823,3 +823,40 @@ Envelope Encryption
 Deletion
 - must be disabled first
 - must be scheduled for deletion (minimum of 1 week wait)
+
+## SQS
+
+*Simple Queue Service*
+
+- distributed message queuing system
+- access message queue that can be used to store messages while waiting for a computer to process them
+- can decouple components of an app so they run independently
+- messages can contain up to 256KB of text in any format
+- can be in the queue for 1 minute - 14 days
+- default retention period is 4 days
+- messages can be retrieved programmatically using SQS API
+- queue acts as a buffer between producer and consumer
+- pull-based, not push-based
+
+Queue Types
+- Standard Queues (default)
+- nearly unlimited number of transactions
+  - guarantee message is delivered at least once
+  - may be out of order
+- FIFO Queues (first in first out)
+  - guaranteed to be in order
+  - limited to 300 transactions per second (TPS)
+
+Visibility Timeout
+- amount of time that message is invisible in the SQS queue after a reader picks up that message
+- if not processed in time, becomes visible again and another reader picks it up
+- can result in message being delivered twice
+- default visibility timeout: 30 seconds
+- increase it if your task takes >30 seconds
+- maximum is 12 hours
+
+Short Polling
+- returned immediately even if no messages are in the queue
+
+Long Polling
+- polls the queue periodically and only returns a response when a message is in the queue or timeout is reached
