@@ -785,3 +785,41 @@ Exponential Backoff
   - e.g. 50ms, 100ms, 200ms, ...
 - if after 1 minute still doesn't work, request size may be exceeding the throughput for read/write capacity
 - featured in many SDKs of services, e.g. S3 buckets, CloudFormation, SES, etc.
+
+## KMS
+
+*Key Management System*
+
+- create and control encryption keys used to encrypt data
+- multi-tenant
+
+Customer Master Key (CMK)
+- consists of
+  - alias
+  - creation date
+  - description
+  - key state
+  - key material (either customer provided or AWS provided)
+- can NEVER be exported
+
+Setup
+- Administrative permissions
+  - users/roles who can administer but not use the key through KMS API
+- Usage permissions
+  - users/roles that can use the key to encrypt/decrypt data
+
+API Calls
+- `aws kms encrypt`
+- `aws kms decrypt`
+- `aws kms re-encrypt`
+  - on server side, decrypts then re-encrypts using a new CMK
+  - destroys plaintext immediately to avoid exposing it to the client side
+- `aws kms enable-key-rotation`
+
+Envelope Encryption
+- Master Key encrypts Envelope Key (Data Key) encrypts Data
+- Encrypted Data Key decrypted by Master Key which is then used to decrypt Data
+
+Deletion
+- must be disabled first
+- must be scheduled for deletion (minimum of 1 week wait)
