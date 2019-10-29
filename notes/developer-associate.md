@@ -828,6 +828,7 @@ Deletion
 
 *Simple Queue Service*
 
+- first service on the AWS platform
 - distributed message queuing system
 - access message queue that can be used to store messages while waiting for a computer to process them
 - can decouple components of an app so they run independently
@@ -840,7 +841,7 @@ Deletion
 
 Queue Types
 - Standard Queues (default)
-- nearly unlimited number of transactions
+  - nearly unlimited number of transactions
   - guarantee message is delivered at least once
   - may be out of order
 - FIFO Queues (first in first out)
@@ -854,12 +855,15 @@ Visibility Timeout
 - default visibility timeout: 30 seconds
 - increase it if your task takes >30 seconds
 - maximum is 12 hours
+- `ChangeMessageVisiblity` changes visibility timeout of specified message in a queue
+
 
 Short Polling
 - returned immediately even if no messages are in the queue
 
 Long Polling
 - polls the queue periodically and only returns a response when a message is in the queue or timeout is reached
+- more efficient
 
 ## SNS
 
@@ -887,7 +891,7 @@ Long Polling
 - pay-as-you-go-model
 - can be delivered automatically to an S3 bucket
 - can trigger Lambda functions and SNS notifications
-- only need to know email address
+- not subscription-based, only need to know email address
 
 ## Kinesis
 
@@ -895,6 +899,7 @@ Long Polling
 - load and analyze data
 
 Kinesis Streams
+- video and data streams
 - shards
   - multiple shards in stream
 - streaming data from producers
@@ -904,6 +909,8 @@ Kinesis Streams
 
 Kinesis Firehose
 - producers
+- load data streams into AWS data stores
+- near real-time analytics with business intelligence (BI) tools
 - data analysis in Lambda is optional
 - sent to consumers
   - S3 then copied to Redshift
@@ -913,3 +920,82 @@ Kinesis Analytics
 - analysis of shards or Firehose
 - uses SQL type of query languages
 - no worry about consumers
+
+## Elastic Beanstalk
+
+- service for deploying and scaling web applications (up and down)
+- languages: Java, .NET, PHP, Node.js, Python, Ruby, Go, Docker
+- server platforms like Apache Tomcat, Nginx, Passenger, Puma, and IIS
+- upload code as a .zip
+- handles deployment, capacity provisioning, load balancing, auto-scaling, application health
+- can fully manage AWS resources or you can control
+- pay only for AWS resources required to store and run applications (e.g. EC2 instances and S3 buckets)
+- Managed Platform Updates can auto-apply updates on OS, Java, PHP, Node.js, etc.
+- monitoring, metrics, health checks: integration with CloudWatch and X-Ray
+
+Deployment Policies
+- all at once
+  - deploys new version to all instances simultaneously
+  - outage while deployment, not ideal for mission-critical
+  - if update fails, roll back changes by re-deploying original version to all instances
+- rolling
+  - deploys in batches
+  - not ideal for performance sensitive systems
+  - if update fails, need to perform additional rolling update to roll back changes
+  - available with more than one instance
+- rolling with additional batch
+  - launches an additional batch of instances, and deploys in batches
+  - maintains full capacity/performance
+  - if fails, perform an additional update to roll back the changes
+  - available with more than one instance
+- immutable
+  - deploys new version to fresh group of instances in auto-scaling group
+  - when new instances pass health checks, moved to new group and old instances are terminated
+  - maintains full capacity
+  - rollback requires only terminating the new auto-scaling group
+  - preferred option for mission-critical prod systems
+
+Configuration Files
+- define packages to install, create users and groups, run shell commands, etc.
+- written in YAML or JSON
+- must have `.config` extension
+- must be saved in folder `.ebextensions` (top-level directory of application source code)
+
+RDS Integration
+- RDS from within EB console
+  - not ideal for production because if application is terminated, so does database
+  - suitable for dev and test only
+- Decoupled
+  - launch RDS outside of EB, directly from RDS section of console
+  - steps required to configure
+    - additional security group in environment's auto scaling group
+    - connection string configuration
+  - suitable for prod
+
+## Systems Manager Parameter Store
+
+- confidential info such as passwords, database connection strings, license codes
+- store as plaintext or encrypted
+- can reference these values by using their names
+- can be used with EC2, CloudFormation, Lambda, EC2 Run Command, etc.
+
+## Shield
+
+- protects against DDoS attacks
+- operates on layer 3 and 4 of ISO network model
+
+## WAF
+
+*Web Application Firewall*
+
+- protects against SQL injection attacks and cross-site scripting
+- blocks traffic from IP addresses based on rules
+
+## Amazon Macie
+
+- uses machine learning to prevent data loss and sensitive data
+
+## AWS Storage Gateway
+
+- attaching infrastructure located in a data centre to the AWS storage infrastructure
+- can act as a file system mounted on an S3 bucket
