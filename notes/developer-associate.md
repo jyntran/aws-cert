@@ -999,3 +999,86 @@ RDS Integration
 
 - attaching infrastructure located in a data centre to the AWS storage infrastructure
 - can act as a file system mounted on an S3 bucket
+
+## CI/CD
+
+*Continuous Integration and Continuous Delivery/Deployment*
+
+CI
+- code repository
+  - frequently pushed code updates
+  - small code changes
+- build management system
+  - triggers automated build
+- test framework
+  - runs automated tests
+
+CD
+- built, tested, and prepared for release on staging environments
+- deployed packaged application into environment
+- continuous deployment, one step further: automatically releases code as soon as it passes stages of release process
+
+AWS offers
+- CodeCommit
+  - managed source code service
+- CodeBuild
+  - managed build service
+- CodeDeploy
+  - managed application deployment service
+  - to EC2, premises, Lambda functions, etc.
+- CodePipeline
+  - model, visualize, build service
+
+## CodeCommit
+
+- secure, highly scalable private Git repositories
+- Git
+  - centralized repo for code, binaries, images, libraries
+  - tracks and manages code changes
+  - maintains version history
+  - manages updates from multiple sources and enables collaboration
+  - code changes are called commits
+- can use Git on local machine to interact with CodeCommit repo
+- data is encrypted in transit and at rest
+- security: HTTPS or SSL
+- notifications to SNS or CloudWatch
+
+## CodeDeploy
+
+- deploy to EC2 instances, on-premise systems, and Lambda functions
+- scales with CI/CD tools, e.g. Jenkins, GitHub, Atlassian, AWS CodePipeline
+- configuration tools, e.g. Ansible, Puppet, Chef
+
+In-place deployment
+- also known as rolling update
+- stop app on each host and deploy the latest code
+- only for EC2 or on-premise
+- to roll back, must re-deploy the previous version of the application
+
+Blue/Green deployment
+- blue: active
+- green: new
+- new are registered with ELB, traffic is routed to new instances, and originals are eventually terminated
+- roll back/switching is faster and more reliable
+
+Terminology
+- Deployment group
+  - set of EC2 instances or Lambda functions which a new revision is to be deployed
+- Deployment
+  - process and components used to apply a new revision
+- Deployment configuration
+  - set of rules as well as success/fail conditions
+- AppSpec file
+  - defines deployment actions to be executed
+- Revision
+  - everything needed to deploy: AppSpec, app files, exe, configs
+- Application
+  - unique identifier for app to deploy
+  - to ensure correct combo of revision, deployment config, and deployment group are referenced during deployment
+
+## CodePipeline
+
+- orchestrates build, test, and deployment
+- can be modeled using GUI or CLI
+- every code change automatically enters the workflow and triggers the actions
+- pipeline stops if one of the steps fails
