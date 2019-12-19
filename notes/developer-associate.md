@@ -1076,9 +1076,163 @@ Terminology
   - unique identifier for app to deploy
   - to ensure correct combo of revision, deployment config, and deployment group are referenced during deployment
 
+AppSpec file
+- Lambda
+  - written in YAML or JSON
+  - `version`: current supported is 0.0
+  - `resources`: name and properties of Lambda function to deploy
+  - `hooks`: specific Lambda functions to run at set points
+- EC2/on premises
+  - written in YAML
+  - must be placed in root directory of your revision, i.e. the directory of application source code
+  - `version`
+  - `os`: currently used OS
+  - `files`: location of application files to be copied and where to be copied to (`source` and `destination`)
+  - `hooks`: specific scripts to be run at set points
+- order of hooks
+  - start
+    - `BeforeBlockTraffic`
+    - `BlockTraffic`: deregister instances from a load balancer
+    - `AfterBlockTraffic`
+  - middle
+    - `ApplicationStop`
+    - `DownloadBundle`: copies application revision files to a temp location
+    - `BeforeInstall`
+    - `Install`
+    - `AfterInstall`
+    - `ApplicationStart`
+    - `ValidateService`
+  - end
+    - `BeforeAllowTraffic`
+    - `BlockTraffic`: register instances to a load balancer
+    - `AfterAllowTraffic`
+
 ## CodePipeline
 
 - orchestrates build, test, and deployment
 - can be modeled using GUI or CLI
 - every code change automatically enters the workflow and triggers the actions
 - pipeline stops if one of the steps fails
+
+## CodeBuild
+
+- runs a set of commands that you define
+  - e.g. compiles code, runs tests, and produces artifacts that are ready for deploy
+- BuildSpec file
+- log in CodeBuild console or in CloudWatch
+
+## CloudFormation
+
+- manage, configure, provision AWS infrastructure as code
+- uses CloudFormation template
+  - YAML or JSON
+  - upload to CloudFormation using S3
+  - main sections
+    - `Parameters`
+    - `Conditions`
+    - `Resources`: mandatory field
+    - `Mappings`: e.g. Region : AMI
+    - `Transforms`: reference code in S3, specify use of the SAM for Lambda deployments
+
+Disable Rollback
+- prevents CloudFormation from deleting entire stack on failure
+
+Nested Stacks
+- re-use of CloudFormation code for common use cases
+- good for load balancers, web or application servers
+- store in S3 and access from CloudFormation Stack type
+
+## ECS
+
+*Elastic Container Service*
+
+## SAM
+
+*Serverless Application Model*
+
+- define and provision serverless applications using CloudFormation
+- CLI available to package and deploy
+
+## Web Identity Federation
+
+- gives users access to AWS resources after authenticated with a web-based identity provider
+
+Amazon Cognito
+- sign-up and sign-in, guest access for apps
+- acts as identity broker between app and web ID providers
+- synchronizes user data for multiple devices
+- recommended for social media accounts
+  - get web token (JWT) to pass into Cognito for temporary credentials
+- user pools
+  - directories to manage sign-up and sign-in functionality
+  - directly or indirectly through identity provider
+- identity pools
+  - create unique identities for users
+- push synchronization
+  - uses SNS to send silent push notification to all devices associated with given user identity whenever data in cloud changes
+
+AWS Managed Policies
+- predefined policies by AWS
+- cannot change permission
+
+Customer Managed Policies
+- policies created by a customer
+- can copy a managed policy and make edits
+
+Inline Policies
+- embedded to a single user, group, role
+- if user/group/role is deleted, so are the inline policies
+- managed policies are recommended over inline
+
+STS AssumeRoleWithWebIdentity
+- API provided by STS (Security Token Service)
+- returns temporary security credentials for users
+- recommended for web applications
+- for mobile applications, Cognito is recommended over STS
+- response returns with temporary user ARN and credentials
+- temporary credentials can expire
+
+Cross Account Access
+- create access policies across multiple AWS accounts
+
+## CloudWatch
+
+- monitoring performance for AWS resources and applications running on AWS
+- monitors by default
+  - host level metrics
+    - CPU
+    - network
+    - disk
+    - status check
+  - EC2 monitoring is 5 minute interval
+    - detailed monitoring is 1 minute interval
+- custom metrics
+  - RAM utilization
+  - amount of storage left on hard disk
+
+Retrieval
+- use GetMetricStatistics API or by third-party tools offered by AWS partners
+
+Storage
+- store logs indefinitely
+- can change retention
+- can retrieve from terminated instances
+
+Granularity
+- default: 1 minute, can be 3 or 5 minutes depending on service
+- custom: minimum is 1 minute
+
+Alarms
+- can monitor any CloudWatch metric in account
+- can set appropriate thresholds to trigger alarms and what actions should be taken if alarm state is reached
+
+On Premise
+- download and install SSM agent and CloudWatch agent
+
+## CloudTrail
+
+- monitors API calls in the AWS platform
+
+## AWS Config
+
+- records state of AWS environment and notify of changes
