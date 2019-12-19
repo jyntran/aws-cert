@@ -1,5 +1,39 @@
 # AWS Developer Associate Notes
 
+## Service Categories
+
+Serverless
+- Lambda
+- API Gateway
+- DynamoDB
+- ElasticCache
+- S3
+
+Automation & Monitoring
+- ElasticBeanstalk
+- CloudFormation
+- CloudWatch
+- X-Ray
+
+Dev Tools
+- CodeCommit
+- CodePipeline
+- CodeDeploy
+- CodeBuild
+
+Containers
+- ECS
+- ECR
+
+Security
+- IAM
+- Cognito
+- KMS
+
+Messaging & Streaming
+- SQS
+- Kinesis
+
 ## IAM
 
 *Identity Access Management*
@@ -25,6 +59,11 @@ Access Key ID and Secret Access Key
 Always set up Multifactor Authentication (MFA) on the root account
 
 Password rotation policies can be created and customized
+
+Policy Simulator
+- tests IAM policies before committing them to production
+- validates policy
+- test policies already attached to existing users
 
 ## EC2
 
@@ -168,6 +207,16 @@ Secret access key
 Already installed on EC2
 
 Can use on own PC
+
+Pagination
+- control number of items included in output when CLI command is run
+- by default, CLI uses page size of 1,000
+- e.g. `aws s3api list-objects my_bucket` on bucket with 2,500 objects makes 3 API calls and displays output all in one go
+- errors
+  - "timed out" error when API call exceeds the maximum allowed time to fetch results
+  - use `--page-size N` option to lower number of items
+    - CLI still retrieve full list but performs larger number of API calls in the background and retrieves smaller number
+  - use `--max-items N` option to return fewer items in CLI output
 
 ## RDS
 
@@ -592,17 +641,42 @@ Versioning
 - each has a unique ARN
 - immutable
 - only $LATEST can be updated
+- when new version is uploaded, it becomes $LATEST
 
 Qualified/Unqualified ARNs
 - qualified: `helloworld:$LATEST` or `helloworld:ALIAS`
 - unqualified: `helloworld` (no version)
 
 Alias
+- like a pointer to a specific version of the function code
 - can create a PROD alias, point to version 1, then change to version 2 when ready
 
 Shift traffic
 - based on weights (%)
 - cannot be done on $LATEST version, instead create an alias to $LATEST
+
+Concurrent executions
+- safety feature to limit number of executions across all functions in a given region per account
+- default is 1,000 per region
+- `TooManyRequestsException`
+- HTTP status code: 429
+- request throughput limit exceeded
+- to request increase, submit request to AWS Support Center
+- reserved concurrency
+  - guarantees that set number of executions which will always be available for critical functions
+  - however this also acts as a limit
+
+VPC
+- virtual private cloud
+- enabling Lambda access to VPC resources
+  - allow function to connect to private subnet
+  - needs following info
+    - private subnet ID
+    - security group ID (with required access)
+    - Lambda uses info to set up ENIs using an available IP address from your private subnet
+  - add VPC information to Lambda function config using `vpc-config` parameter
+    - `aws lambda update-function-configuration --vpc-config ...`
+
 
 ## Alexa
 
@@ -640,6 +714,12 @@ SSML (synthesis speech markup language)
 - languages, same list as supported by Lambda
 - interceptors to add to code to trace incoming HTTP requests
 - client handlers to instrument AWS SDK clients to call other services
+
+Configuration
+- requires X-Ray SDK and X-Ray daemon
+- SDK to instrument application to send data
+  - annotations are simple key-value pairs indexed for use with filter expressions
+- ECS, run X-Ray daemon as its own Docker image alongside application
 
 ## Advanced API Gateway
 
@@ -865,6 +945,24 @@ Long Polling
 - polls the queue periodically and only returns a response when a message is in the queue or timeout is reached
 - more efficient
 
+Delay Queues
+- postpone delivery of new messages to a queue for a number of seconds
+- remain invisible to consumers for duration of delay period
+- standard: changing setting only affects new messages
+- FIFO: affects the delay of messages already in queues
+- when to use
+  - large distributed applications
+  - need to apply a delay to an entire queue of messages
+  - e.g. allow databases time to update before sending notifications
+- managing large messages: 256KB up to 2GB in size
+- S3 to store messages
+- Amazon SQS Extended Client Library for Java to manage
+  - specify messages are always stored in S3 or only messages > 256KB
+  - send message which references a message object stored in S3
+  - get message object from S3
+  - delete a message object from S3
+- also need AWS SDK for Java
+
 ## SNS
 
 *Simple Notification Service*
@@ -900,12 +998,30 @@ Long Polling
 
 Kinesis Streams
 - video and data streams
-- shards
+- set of shards
+  - sequence of data records in a stream
+  - each data record has a unique sequence number
+  - 5 read transactions per second, up to max of 2MB/second
+  - 1,000 write records per second, up to max of 1MB/second
+  - as data rate increases, so does number of shards (resharding)
   - multiple shards in stream
 - streaming data from producers
 - stored for 24 hours, can be configured to be 7 days in shards
-- sent to consumers
+- sent to consumers (instances)
   - other AWS services
+- Kinesis Client Library (KCL)
+  - tracks number of shards in stream
+  - discovers new shards after resharding
+  - for every shard there is a record processor
+    - one consumer: create all record processors on single consumer
+    - two: load balance and create half processors on one instance and half on another
+  - ensure number of instances does not exceed the number of shards
+  - never need multiple instances to handle processing load of one shard
+  - however, one worker can process multiple shards
+- scaling
+  - fine if number of shards exceeds number of instances
+  - CPU utilisation should drive quantity of consumer instances, not number of shards
+  - use Auto Scaling group and base scaling decisions on CPU load on consumers
 
 Kinesis Firehose
 - producers
@@ -971,6 +1087,16 @@ RDS Integration
     - additional security group in environment's auto scaling group
     - connection string configuration
   - suitable for prod
+
+Docker Container Deployment
+- single container
+  - deploy to single EC2 instance
+- multiple containers
+  - build ECS cluster and deploy on each instance
+- upload zip file with code bundle
+- to upgrade application to new version, easily done in console to upload and deploy
+- can be uploaded directly from local machine or from public S3 bucket
+- could also store code in CodeCommit but must use EB CLI
 
 ## Systems Manager Parameter Store
 
